@@ -1,46 +1,53 @@
-# YZM304 Derin Öğrenme Projesi: Evrişimli Sinir Ağları ile Özellik Çıkarımı ve Sınıflandırma
+# YZM304 Derin Öğrenme Proje Raporu: Evrişimli Sinir Ağları (CNN) ile Görüntü Sınıflandırma
 
-Ankara Üniversitesi Yapay Zeka ve Veri Mühendisliği Bölümü 2025-2026 Bahar Dönemi YZM304 Derin Öğrenme dersi kapsamında hazırlanan bu proje, evrişimli sinir ağları (CNN) mimarilerinin görüntü sınıflandırma performansını ve hibrit modelleme yaklaşımlarını incelemektedir.
+Bu rapor, Ankara Üniversitesi Yapay Zeka ve Veri Mühendisliği Bölümü 2025-2026 Bahar Dönemi YZM304 Derin Öğrenme dersi I. Proje Modülü II kapsamında hazırlanmıştır.
 
 ## 1. Giriş (Introduction)
-Bu çalışmanın temel amacı, CNN modelleri kullanarak benchmark veri setleri üzerinde özellik çıkarma ve sınıflandırma işlemlerini gerçekleştirmektir. Proje; temel CNN yapılarından, literatürde kabul görmüş karmaşık mimarilere ve derin öğrenme ile klasik makine öğrenmesini birleştiren hibrit sistemlere kadar geniş bir yelpazeyi kapsamaktadır.
+Bu çalışmanın temel amacı, evrişimli sinir ağları (CNN) kullanarak özellik çıkarma ve sınıflandırma süreçlerini analiz etmektir. Projede, basit mimarilerden derin literatür modellerine ve klasik makine öğrenmesi algoritmalarıyla birleştirilmiş hibrit yapılara kadar geniş bir yelpaze test edilmiştir.
 
-### Veri Seti
-Çalışmada benchmark veri seti olarak **CIFAR-10** kullanılmıştır. 
-* **İçerik:** 10 farklı sınıfa (uçak, otomobil, kuş, kedi vb.) ait 32x32 boyutlarında renkli (RGB) görüntülerden oluşmaktadır.
-* **Ön İşleme:** Görüntüler eğitim öncesinde normalize edilmiş ve literatür mimarilerine uyum sağlaması amacıyla 224x224 boyutlarına yeniden boyutlandırılmıştır.
+### Veri Seti: CIFAR-10
+* **İçerik:** 10 farklı sınıfa ait 32x32 boyutlarında RGB görüntüler.
+* **Ön İşleme:** Veriler eğitim öncesinde normalize edilmiş ve literatür mimarilerine uyum sağlaması amacıyla 224x224 boyutlarına yeniden boyutlandırılmıştır.
 
 ## 2. Yöntem (Method)
-Çalışma kapsamında beş farklı modelleme yaklaşımı geliştirilmiştir:
+Çalışmada beş farklı modelleme yaklaşımı geliştirilmiştir:
 
-### Model Mimarileri
-* **Model 1 (Temel CNN):** LeNet-5 mimarisine benzer yapıda; evrişimli (Conv2d), havuzlama (MaxPool) ve tam bağlantılı (Linear) katmanlardan oluşan özgün bir sınıftır.
-* **Model 2 (İyileştirilmiş CNN):** Model 1 ile aynı hiperparametrelere sahip olup, ağı iyileştirmek amacıyla **Batch Normalization** ve **Dropout** (0.3) katmanları eklenmiştir.
-* **Model 3 (Literatür Mimarisi):** PyTorch kütüphanesinden önceden eğitilmiş (**pretrained=True**) **AlexNet** mimarisi kullanılarak transfer öğrenme (transfer learning) uygulanmıştır.
-* **Model 4 (Hibrit Yapı):** AlexNet mimarisinin özellik çıkarımı mekanizması kullanılarak görüntülerden özellik vektörleri elde edilmiş; bu verilerle kanonik bir makine öğrenmesi modeli olan **Destek Vektör Makinesi (SVM)** eğitilmiştir.
+* **Model 1 (Temel CNN):** LeNet-5 mimarisine benzer şekilde; evrişimli (Conv2d), havuzlama (MaxPool), aktivasyon ve tam bağlantılı (Linear) katmanlardan oluşan özgün bir sınıftır.
+* **Model 2 (İyileştirilmiş CNN):** Model 1 ile aynı hiperparametrelere sahip olup, ağı iyileştirmek amacıyla Batch Normalization ve Dropout (0.3) katmanları eklenmiştir.
+* **Model 3 (Literatür Mimarisi):** PyTorch `torchvision.models` modülünden önceden eğitilmiş (pretrained=True) **AlexNet** mimarisi kullanılarak transfer öğrenme uygulanmıştır.
+* **Model 4 (Hibrit Yapı):** AlexNet mimarisinin özellik çıkarımı mekanizması kullanılarak görüntülerden özellik vektörleri elde edilmiş ve bu verilerle bir **Destek Vektör Makinesi (SVM)** eğitilmiştir.
 * **Model 5:** Tam bir CNN mimarisi ile hibrit modelin performansı aynı veri setleri üzerinde karşılaştırılmıştır.
 
-### Hiperparametreler ve Eğitim
-* **Kayıp Fonksiyonu:** Eğitim aşamasında **Cross Entropy Loss** (`nn.CrossEntropyLoss()`) kullanılmıştır.
-* **Optimizer:** Gradyan tabanlı optimizasyon için yüksek verimlilik sunan **Adam** optimizer tercih edilmiştir.
-* **Öğrenme Oranı (Learning Rate):** Dengeli bir yakınsama sağlamak amacıyla 0.001 olarak belirlenmiştir.
+### Hiperparametreler
+* **Kayıp Fonksiyonu:** `nn.CrossEntropyLoss()`.
+* **Optimizer:** Adam Optimizer (Dengeli yakınsama ve adaptif öğrenme oranı için).
+* **Öğrenme Oranı:** 0.001.
 
 ## 3. Sonuçlar (Results)
-Eğitim sürecinden elde edilen temel bulgular şunlardır:
 
-* **Eğitim Kaybı (Loss):** Modellerin öğrenme süreçlerine ait kayıp grafikleri `loss_plot_fixed.png` dosyasında sunulmuştur. AlexNet tabanlı transfer öğrenme modelinin en düşük kayıp değerlerine en hızlı sürede ulaştığı görülmüştür.
-* **Hibrit Veri Setleri:** Model 4 için oluşturulan özellik ve etiket setleri `.npy` uzantılı dosyalarda saklanmıştır.
-    * **features.npy:** Çıkarılan özellik vektörlerini içerir.
-    * **labels.npy:** Özelliklere karşılık gelen etiketleri içerir.
-    * Bu veri setlerinin boyut ve uzunlukları projede açıkça yazdırılarak doğrulanmıştır.
+### 3.1. Eğitim Kayıplarının Karşılaştırılması
+Eğitim sürecinde elde edilen kayıp (loss) değerlerinin modellere göre değişimi aşağıdaki grafikte sunulmuştur:
+
+![Modellerin Eğitim Kayıp Karşılaştırması](loss_plot.png)
+
+* **Model 1:** En düşük kayıp değerine en istikrarlı şekilde ulaşan model olmuştur.
+* **Model 2:** Batch Normalization etkisiyle hızla düşüş göstermiştir.
+* **Model 3:** Önceden eğitilmiş ağırlıklar sayesinde belirli bir seviyede stabilize olmuştur.
+
+<img width="640" height="480" alt="loss_plot" src="https://github.com/user-attachments/assets/0b51429b-33d8-42d1-ba85-08315211350f" />
+<img width="1000" height="600" alt="loss_final" src="https://github.com/user-attachments/assets/22bf3ef4-efef-4871-bfd0-82718a7d03a6" />
+
+### 3.2. Hibrit Model Veri Yapısı
+Model 4 için özellik çıkarımı aşamasında oluşturulan dosyaların boyutları doğrulanmıştır:
+* **features.npy:** [50000, 4096] (Örnek sayısı x Özellik vektörü)
+* **labels.npy:** [50000] (Etiket seti)
 
 ## 4. Tartışma (Discussion)
-Yapılan karşılaştırmalar sonucunda elde edilen yorumlar:
-* **Özel Katmanların Etkisi:** Batch Normalization ve Dropout katmanlarının eklenmesi (Model 2), Model 1'e kıyasla aşırı öğrenmeyi (overfitting) azaltmış ve test setinde daha kararlı sonuçlar vermiştir.
-* **Transfer Öğrenme:** Önceden eğitilmiş literatür mimarilerinin kullanımı, sınırlı veri setlerinde bile çok daha yüksek doğruluk oranlarına ulaşılmasını sağlamıştır.
-* **Hibrit Model Verimliliği:** CNN tabanlı özellik çıkarımı ile klasik makine öğrenmesi modellerinin (SVM) birleştirilmesi, derin öğrenmenin karmaşık özellik çıkarma yeteneğini klasik algoritmaların kararlılığı ile başarılı bir şekilde harmanlamıştır.
+* **Özel Katmanların Etkisi:** Batch Normalization ve Dropout katmanlarının eklenmesi, Model 1'e kıyasla aşırı öğrenmeyi (overfitting) azaltmış ve test setinde daha güvenilir sonuçlar verilmesini sağlamıştır.
+* **Hibrit Model Verimliliği:** CNN tabanlı özellik çıkarımı ile klasik makine öğrenmesi modellerinin birleştirilmesi başarılı sonuçlar üretmiştir.
+* **Transfer Öğrenme:** Hazır mimarilerin kullanımı, özellikle karmaşık sınıfların ayırt edilmesinde manuel modellerden daha yüksek performans sergilemiştir.
 
-## Referanslar (References)
+## 5. Referanslar (References)
 1. Ankara Üniversitesi Yapay Zeka ve Veri Mühendisliği, YZM304 Derin Öğrenme Ders Notları.
-2. PyTorch Torchvision Models Documentation: [torchvision.models](https://pytorch.org/vision/0.9/models.html).
-3. CIFAR-10 Dataset.
+2. PyTorch Documentation (torchvision.models).
+3. CIFAR-10 Dataset Resource.
