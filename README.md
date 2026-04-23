@@ -34,7 +34,9 @@ Eğitim sürecinde elde edilen kayıp (loss) değerlerinin modellere göre deği
 * **Model 2:** Batch Normalization etkisiyle hızla düşüş göstermiştir.
 * **Model 3:** Önceden eğitilmiş ağırlıklar sayesinde belirli bir seviyede stabilize olmuştur.
 
-<img width="640" height="480" alt="loss_plot" src="https://github.com/user-attachments/assets/0b51429b-33d8-42d1-ba85-08315211350f" />
+<img width="2546" height="1653" alt="loss_plot" src="https://github.com/user-attachments/assets/316da8c3-5e28-4189-b23a-63a78ce17385" />
+
+
 <img width="1000" height="600" alt="loss_final" src="https://github.com/user-attachments/assets/22bf3ef4-efef-4871-bfd0-82718a7d03a6" />
 
 ### 3.2. Hibrit Model Veri Yapısı
