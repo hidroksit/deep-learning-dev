@@ -1,1 +1,151 @@
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import torchvision
+import torchvision.transforms as transforms
+import matplotlib.pyplot as plt
+import numpy as np
+from sklearn.svm import SVC
 
+# Gereksinim: Görüntü verileri için gerekli ön işlemeler [cite: 9]
+transform = transforms.Compose([
+    transforms.Resize((224, 224)), # AlexNet için boyut büyütüldü
+    transforms.ToTensor(),
+    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+])
+
+# Veri seti: CIFAR-10 [cite: 6]
+trainset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform)
+trainloader = torch.utils.data.DataLoader(trainset, batch_size=32, shuffle=True)
+
+testset = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=transform)
+testloader = torch.utils.data.DataLoader(testset, batch_size=32, shuffle=False)
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print(f"Hazır: {device}")
+
+
+# Model 1: LeNet-5 benzeri temel CNN sınıfı [cite: 10]
+class Model1(nn.Module):
+    def __init__(self):
+        super(Model1, self).__init__()
+        self.features = nn.Sequential(
+            nn.Conv2d(3, 6, 5), nn.ReLU(), nn.MaxPool2d(2, 2),
+            nn.Conv2d(6, 16, 5), nn.ReLU(), nn.MaxPool2d(2, 2)
+        )
+        self.classifier = nn.Sequential(
+            nn.Flatten(),
+            nn.Linear(16 * 53 * 53, 120), nn.ReLU(),
+            nn.Linear(120, 84), nn.ReLU(),
+            nn.Linear(84, 10)
+        )
+    def forward(self, x):
+        return self.classifier(self.features(x))
+
+# Model 2: İyileştirilmiş CNN (Batch Normalization & Dropout) [cite: 14, 15]
+class Model2(nn.Module):
+    def __init__(self):
+        super(Model2, self).__init__()
+        self.features = nn.Sequential(
+            nn.Conv2d(3, 6, 5), nn.BatchNorm2d(6), nn.ReLU(), nn.MaxPool2d(2, 2),
+            nn.Conv2d(6, 16, 5), nn.BatchNorm2d(16), nn.ReLU(), nn.MaxPool2d(2, 2)
+        )
+        self.classifier = nn.Sequential(
+            nn.Flatten(),
+            nn.Linear(16 * 53 * 53, 120), nn.ReLU(), nn.Dropout(0.3),
+            nn.Linear(120, 84), nn.ReLU(),
+            nn.Linear(84, 10)
+        )
+    def forward(self, x):
+        return self.classifier(self.features(x))
+
+
+
+def train_model(model, name, epochs=5):
+    model.to(device)
+    criterion = nn.CrossEntropyLoss() # Gereksinim: Cross Entropy Loss [cite: 22]
+    optimizer = optim.Adam(model.parameters(), lr=0.001) # Hiperparametre tercihi [cite: 23]
+    losses = []
+    
+    print(f"\n--- {name} Eğitimi Başlıyor ---")
+    for epoch in range(epochs):
+        curr_loss = 0.0
+        for i, (imgs, lbls) in enumerate(trainloader):
+            if i > 50: break # Zaman kazanmak için kısıtlama
+            imgs, lbls = imgs.to(device), lbls.to(device)
+            optimizer.zero_grad()
+            outputs = model(imgs)
+            loss = criterion(outputs, lbls)
+            loss.backward()
+            optimizer.step()
+            curr_loss += loss.item()
+        losses.append(curr_loss / 50)
+        print(f"Epoch {epoch+1} Bitti. Loss: {losses[-1]:.4f}")
+    return losses
+
+# Model 3: Hazır AlexNet mimarisi [cite: 18, 19]
+model3 = torchvision.models.alexnet(pretrained=True) # Pretrained=True [cite: 21]
+model3.classifier[6] = nn.Linear(4096, 10)
+
+m1_loss = train_model(Model1(), "Model 1")
+m2_loss = train_model(Model2(), "Model 2")
+m3_loss = train_model(model3, "Model 3 (AlexNet)")
+
+# Hibrit Model: Özellik Çıkarımı [cite: 24]
+model3.eval()
+feat_list, lab_list = [], []
+
+with torch.no_grad():
+    for i, (imgs, lbls) in enumerate(testloader):
+        if i > 20: break 
+        feats = model3.features(imgs.to(device))
+        feat_list.append(torch.flatten(feats, 1).cpu().numpy())
+        lab_list.append(lbls.numpy())
+
+X_feat = np.concatenate(feat_list)
+y_feat = np.concatenate(lab_list)
+
+# Gereksinim: Özellik ve etiket setlerinin .npy olarak kaydedilmesi [cite: 24]
+np.save('features.npy', X_feat)
+np.save('labels.npy', y_feat)
+print(f"Veri Boyutu: {X_feat.shape}")
+
+# Kanonik Makine Öğrenmesi: SVM [cite: 25]
+svm = SVC(kernel='linear')
+svm.fit(X_feat, y_feat)
+print(f"Hibrit Model Skoru: {svm.score(X_feat, y_feat):.4f}")
+
+plt.figure(figsize=(10, 6))
+plt.plot(m1_loss, label='Model 1')
+plt.plot(m2_loss, label='Model 2')
+plt.plot(m3_loss, label='Model 3')
+plt.title('Modellerin Kayıp (Loss) Karşılaştırması')
+plt.legend()
+plt.savefig('loss_final.png') # Rapora eklemek için
+plt.show()
+
+import matplotlib.pyplot as plt
+
+# Grafik alanını oluştur
+plt.figure(figsize=(10, 6))
+
+# Çizimleri ekle (Değişkenlerin hafızada olması gerekir)
+if 'm1_loss' in locals():
+    plt.plot(m1_loss, label='Model 1 (Temel CNN)', linewidth=2, marker='o')
+if 'm2_loss' in locals():
+    plt.plot(m2_loss, label='Model 2 (İyileştirilmiş)', linewidth=2, marker='s')
+if 'm3_loss' in locals():
+    plt.plot(m3_loss, label='Model 3 (AlexNet)', linewidth=2, marker='^', color='red')
+
+# Başlık ve Etiketler 
+plt.title('Modellerin Eğitim Kayıp (Loss) Karşılaştırması', fontsize=14)
+plt.xlabel('Epoch', fontsize=12)
+plt.ylabel('Loss Değeri', fontsize=12)
+plt.legend()
+plt.grid(True, linestyle='--', alpha=0.6)
+
+# ÖNEMLİ: Önce kaydet, sonra göster
+plt.savefig('loss_plot_fixed.png', dpi=300, bbox_inches='tight')
+plt.show()
+
+print("Grafik 'loss_plot_fixed.png' adıyla kaydedildi. Sol taraftaki klasör simgesinden indirebilirsin.")
